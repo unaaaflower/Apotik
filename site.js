@@ -60,47 +60,6 @@
     if (initial) initial.click();
   }
 
-  // ---- Profil: preview & validasi foto sebelum upload ----
-  const fotoInput = document.getElementById('foto');
-  if (fotoInput) {
-    const namaEl = document.getElementById('photo-file-name');
-    const submitBtn = document.getElementById('photo-submit');
-    const avatarEl = document.querySelector('.profile-header .avatar');
-    const teksAwal = namaEl.textContent;
-
-    fotoInput.addEventListener('change', () => {
-      const file = fotoInput.files[0];
-      submitBtn.disabled = true;
-      if (!file) { namaEl.textContent = teksAwal; return; }
-
-      const tipeOk = ['image/jpeg', 'image/png', 'image/webp'].includes(file.type);
-      if (!tipeOk) {
-        namaEl.textContent = 'Format tidak didukung (gunakan JPG, PNG, atau WEBP).';
-        fotoInput.value = '';
-        return;
-      }
-      if (file.size > 2 * 1024 * 1024) {
-        namaEl.textContent = 'Ukuran terlalu besar (maksimal 2 MB).';
-        fotoInput.value = '';
-        return;
-      }
-
-      namaEl.textContent = file.name;
-      submitBtn.disabled = false;
-
-      const url = URL.createObjectURL(file);
-      let img = document.getElementById('avatar-img');
-      if (!img) {
-        avatarEl.innerHTML = '';
-        img = document.createElement('img');
-        img.id = 'avatar-img';
-        img.alt = 'Pratinjau foto profil';
-        avatarEl.appendChild(img);
-      }
-      img.src = url;
-    });
-  }
-
   // ---- Dashboard: pilih kategori ----
   document.querySelectorAll('.category-chip').forEach(chip => {
     chip.addEventListener('click', (event) => {
