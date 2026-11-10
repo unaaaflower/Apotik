@@ -1,33 +1,10 @@
 <?php
-require '../includes/session.php';
-
-// Sudah login -> langsung ke dashboard sesuai role
-if (is_logged_in()) {
-    redirect_to(is_admin() ? '../admin/admin-dashboard.php' : 'dashboard.php');
-}
-
-require '../config/users.php';
-
-$error = '';
-$email = '';
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email    = trim($_POST['email'] ?? '');
-    $password = $_POST['password'] ?? '';
-
-    $user = cari_user($email);
-
-    if ($user && password_verify($password, $user['password'])) {
-        session_regenerate_id(true);
-        $_SESSION['email'] = $user['email'];
-        $_SESSION['nama']  = $user['nama'];
-        $_SESSION['role']  = $user['role'];
-
-        redirect_to($user['role'] === 'admin' ? '../admin/admin-dashboard.php' : 'dashboard.php');
-    }
-
-    $error = 'Email atau kata sandi salah.';
-}
+/**
+ * VIEW — form Masuk. Hanya menampilkan data; tidak ada query atau logika bisnis.
+ * Variabel dari AuthController::login(): $error, $identitas, $flash
+ */
+$pesan   = $error !== '' ? $error : ($flash['pesan'] ?? '');
+$isError = $error !== '' || ($flash && !$flash['ok']);
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -36,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Masuk — KlikMedis</title>
-    <link rel="stylesheet" href="style.css?v=<?= filemtime(__DIR__ . '/style.css') ?>">
+    <link rel="stylesheet" href="style.css?v=<?= asset_ver('user/style.css') ?>">
 </head>
 
 <body>
@@ -58,22 +35,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
 
                 <form class="auth-form is-active" id="panel-login" method="post" action="login.php" novalidate>
+                    <?= csrf_field() ?>
 
                     <h2>Selamat datang kembali</h2>
                     <p class="auth-sub">Masuk untuk melanjutkan belanja kebutuhan kesehatanmu.</p>
 
                     <div class="field">
-                        <label for="login-email">Email</label>
-                        <input type="email" id="login-email" name="email" placeholder="nama@email.com" value="<?= e($email) ?>"
-                            autocomplete="username" required>
-                        <span class="field-error" data-error-for="login-email"></span>
+                        <label for="login-identitas">Email atau username</label>
+                        <input type="text" id="login-identitas" name="identitas" placeholder="nama@email.com atau username"
+                            value="<?= e($identitas) ?>" autocomplete="username" required>
+                        <span class="field-error" data-error-for="login-identitas"></span>
                     </div>
 
                     <div class="field">
                         <label for="login-password">Kata sandi</label>
                         <div class="password-wrap">
                             <input type="password" id="login-password" name="password" placeholder="Masukkan kata sandi"
-                                autocomplete="current-password" required minlength="8">
+                                autocomplete="current-password" required>
                             <button type="button" class="toggle-pass" data-target="login-password"
                                 aria-label="Tampilkan kata sandi">
                                 <svg class="icon-eye" viewBox="0 0 24 24" width="18" height="18">
@@ -97,7 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     <button type="submit" class="btn-primary">Masuk</button>
 
-                    <div class="form-message<?= $error ? ' is-error' : '' ?>" id="login-message" role="status" aria-live="polite"><?= e($error) ?></div>
+                    <div class="form-message<?= $isError ? ' is-error' : '' ?>" id="login-message" role="status" aria-live="polite"><?= e($pesan) ?></div>
 
                     <p class="switch-text">Belum punya akun? <a href="register.php" class="link-strong">Daftar sekarang</a></p>
                 </form>
@@ -107,7 +85,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     </div>
 
-    <script src="auth.js"></script>
+    <script src="auth.js?v=<?= asset_ver('user/auth.js') ?>"></script>
 </body>
 
 </html>
