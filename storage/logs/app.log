@@ -1,0 +1,6 @@
+[18-Nov-2026 21:13:54 Asia/Jakarta] Error: Call to a member function handleCommand() on int in D:\xamppp\htdocs\klikmedis-laravel\artisan:16
+Stack trace:
+#0 {main}
+[18-Nov-2026 21:14:15 Asia/Jakarta] Error: Call to a member function handleCommand() on int in D:\xamppp\htdocs\klikmedis-laravel\artisan:16
+Stack trace:
+#0 {main}
