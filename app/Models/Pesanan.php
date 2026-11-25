@@ -27,60 +27,74 @@ class Pesanan
      * Pesanan, rincian barang, dan pengosongan keranjang
      * dilakukan dalam satu transaksi.
      */
-    public function buatDariKeranjang(
-        int $userId,
-        array $items,
-        int $ongkir,
-        string $kurir,
-        array $alamat
-    ): string {
-        $subtotal = Keranjang::subtotal($items);
+  public function buatDariKeranjang(
+    int $userId,
+    array $items,
+    int $ongkir,
+    string $kurir,
+    array $alamat
+): string {
 
-        for ($coba = 0; $coba < 5; $coba++) {
-            $kode = 'SK-' . random_int(10000, 99999);
+    // Memeriksa jumlah setiap produk sebelum membuat pesanan.
+    foreach ($items as $item) {
+        $jumlah = (int) $item['jumlah'];
 
-            try {
-                DB::transaction(function () use (
-                    $userId,
-                    $items,
-                    $ongkir,
-                    $kurir,
-                    $alamat,
-                    $subtotal,
-                    $kode
-                ) {
-                    $pesananId = DB::table('pesanan')->insertGetId([
-                        'kode' => $kode,
-                        'user_id' => $userId,
-                        'kurir' => $kurir,
-                        'ongkir' => $ongkir,
-                        'subtotal' => $subtotal,
-                        'total' => $subtotal + $ongkir,
-                        'metode' => self::METODE,
-                        'status' => self::STATUS_AWAL,
-                        'alamat_nama' => $alamat['nama'],
-                        'alamat_telp' => $alamat['telp'],
-                        'alamat_teks' => $alamat['alamat'],
-                    ]);
+        if ($jumlah < 1 || $jumlah > Keranjang::MAKS_JUMLAH) {
+            throw new RuntimeException(
+                'Jumlah produk harus antara 1 sampai ' .
+                Keranjang::MAKS_JUMLAH . '.'
+            );
+        }
+    }
 
-                    $this->simpanItems((int) $pesananId, $items);
+    // Menghitung subtotal setelah semua jumlah produk valid.
+    $subtotal = Keranjang::subtotal($items);
 
-                    DB::table('keranjang')
-                        ->where('user_id', $userId)
-                        ->delete();
-                });
+    for ($coba = 0; $coba < 5; $coba++) {
+        $kode = 'SK-' . random_int(10000, 99999);
 
-                return $kode;
+        try {
+            DB::transaction(function () use (
+                $userId,
+                $items,
+                $ongkir,
+                $kurir,
+                $alamat,
+                $subtotal,
+                $kode
+            ) {
+                $pesananId = DB::table('pesanan')->insertGetId([
+                    'kode' => $kode,
+                    'user_id' => $userId,
+                    'kurir' => $kurir,
+                    'ongkir' => $ongkir,
+                    'subtotal' => $subtotal,
+                    'total' => $subtotal + $ongkir,
+                    'metode' => self::METODE,
+                    'status' => self::STATUS_AWAL,
+                    'alamat_nama' => $alamat['nama'],
+                    'alamat_telp' => $alamat['telp'],
+                    'alamat_teks' => $alamat['alamat'],
+                ]);
 
-            } catch (QueryException $e) {
-                if ((string) $e->getCode() !== '23000') {
-                    throw $e;
-                }
+                $this->simpanItems((int) $pesananId, $items);
+
+                DB::table('keranjang')
+                    ->where('user_id', $userId)
+                    ->delete();
+            });
+
+            return $kode;
+
+        } catch (QueryException $e) {
+            if ((string) $e->getCode() !== '23000') {
+                throw $e;
             }
         }
-
-        throw new RuntimeException('Gagal membuat kode pesanan unik.');
     }
+
+    throw new RuntimeException('Gagal membuat kode pesanan unik.');
+}
 
     /**
      * Pesanan milik user.
