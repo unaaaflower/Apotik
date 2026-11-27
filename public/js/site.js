@@ -124,20 +124,42 @@
 (() => {
   // ---- Keranjang: tombol − / + mengubah isi kolom jumlah lalu mengirim form ke server ----
   // (Perubahan disimpan di database oleh KeranjangController; validasi tetap dilakukan di server.)
-  document.querySelectorAll('.qty-form').forEach(form => {
-    const input = form.querySelector('[data-qty-input]');
-    if (!input) return;
 
-    form.querySelectorAll('[data-qty-step]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const next = (parseInt(input.value, 10) || 0) + Number(btn.dataset.qtyStep);
-        input.value = Math.min(99, Math.max(1, next));
-        form.submit();
-      });
-    });
+(() => {
+    // Mengambil semua form untuk mengubah jumlah produk di keranjang.
+    document.querySelectorAll('.qty-form').forEach(form => {
+        const input = form.querySelector('[data-qty-input]');
+        if (!input) return;
 
-    input.addEventListener('change', () => form.submit());
-  });
+        // Mengatur tombol minus dan plus.
+        form.querySelectorAll('[data-qty-step]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const next = (parseInt(input.value, 10) || 0)
+                    + Number(btn.dataset.qtyStep);
+
+                // Membatasi jumlah produk antara 1 sampai 99.
+                input.value = Math.min(99, Math.max(1, next));
+
+                // Mengirim perubahan ke Controller.
+                form.submit();
+            });
+        });
+
+        // Menangani perubahan jumlah melalui input manual.
+        input.addEventListener('change', () => {
+            const jumlah = Number(input.value);
+
+            if (!Number.isInteger(jumlah) || jumlah < 1 || jumlah > 99) {
+                alert('Jumlah produk harus antara 1 sampai 99.');
+                input.value = Math.min(99, Math.max(1, jumlah || 1));
+            }
+
+            form.submit();
+        });
+
+    }); // PENUTUP forEach form yang sebelumnya kurang.
+})();
+
 
   // ---- Pengingat Obat ----
   // Data disimpan server (PengingatController). JavaScript di sini hanya:
@@ -282,3 +304,4 @@
     applySearch();
   }
 })();
+
